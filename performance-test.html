@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DopeTech Performance Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #F7DD0F;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+        }
+        .good { color: #10B981; }
+        .warning { color: #F59E0B; }
+        .poor { color: #EF4444; }
+        button {
+            background: #F7DD0F;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #E6C800;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #333;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 DopeTech Performance Test</h1>
+    
+    <div class="test-section">
+        <h2>📊 Core Web Vitals</h2>
+        <button onclick="testCoreWebVitals()">Test Core Web Vitals</button>
+        <div id="core-web-vitals" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>⚡ Loading Performance</h2>
+        <button onclick="testLoadingPerformance()">Test Loading Performance</button>
+        <div id="loading-performance" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>💾 Memory Usage</h2>
+        <button onclick="testMemoryUsage()">Test Memory Usage</button>
+        <div id="memory-usage" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 Network Performance</h2>
+        <button onclick="testNetworkPerformance()">Test Network Performance</button>
+        <div id="network-performance" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Service Worker Status</h2>
+        <button onclick="checkServiceWorker()">Check Service Worker</button>
+        <div id="service-worker-status" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📱 Mobile Performance</h2>
+        <button onclick="testMobilePerformance()">Test Mobile Performance</button>
+        <div id="mobile-performance" class="results"></div>
+    </div>
+
+    <script>
+        // Core Web Vitals Test
+        async function testCoreWebVitals() {
+            const results = document.getElementById('core-web-vitals');
+            results.innerHTML = '<p>Testing Core Web Vitals...</p>';
+
+            try {
+                // Test LCP (Largest Contentful Paint)
+                const lcp = await new Promise(resolve => {
+                    new PerformanceObserver((list) => {
+                        const entries = list.getEntries();
+                        const lastEntry = entries[entries.length - 1];
+                        resolve(lastEntry.startTime);
+                    }).observe({ entryTypes: ['largest-contentful-paint'] });
+                });
+
+                // Test FID (First Input Delay)
+                const fid = await new Promise(resolve => {
+                    new PerformanceObserver((list) => {
+                        const entries = list.getEntries();
+                        const firstEntry = entries[0];
+                        resolve(firstEntry.processingStart - firstEntry.startTime);
+                    }).observe({ entryTypes: ['first-input'] });
+                });
+
+                // Test CLS (Cumulative Layout Shift)
+                const cls = await new Promise(resolve => {
+                    let clsValue = 0;
+                    new PerformanceObserver((list) => {
+                        for (const entry of list.getEntries()) {
+                            if (!entry.hadRecentInput) {
+                                clsValue += entry.value;
+                            }
+                        }
+                        resolve(clsValue);
+                    }).observe({ entryTypes: ['layout-shift'] });
+                });
+
+                const getScore = (value, thresholds) => {
+                    if (value <= thresholds.good) return 'good';
+                    if (value <= thresholds.warning) return 'warning';
+                    return 'poor';
+                };
+
+                const lcpScore = getScore(lcp, { good: 2500, warning: 4000 });
+                const fidScore = getScore(fid, { good: 100, warning: 300 });
+                const clsScore = getScore(cls, { good: 0.1, warning: 0.25 });
+
+                results.innerHTML = `
+                    <div class="metric">
+                        <span>LCP (Largest Contentful Paint):</span>
+                        <span class="${lcpScore}">${Math.round(lcp)}ms</span>
+                    </div>
+                    <div class="metric">
+                        <span>FID (First Input Delay):</span>
+                        <span class="${fidScore}">${Math.round(fid)}ms</span>
+                    </div>
+                    <div class="metric">
+                        <span>CLS (Cumulative Layout Shift):</span>
+                        <span class="${clsScore}">${cls.toFixed(3)}</span>
+                    </div>
+                `;
+            } catch (error) {
+                results.innerHTML = `<p class="poor">Error testing Core Web Vitals: ${error.message}</p>`;
+            }
+        }
+
+        // Loading Performance Test
+        function testLoadingPerformance() {
+            const results = document.getElementById('loading-performance');
+            const navigation = performance.getEntriesByType('navigation')[0];
+            
+            const metrics = {
+                'DNS Lookup': navigation.domainLookupEnd - navigation.domainLookupStart,
+                'TCP Connection': navigation.connectEnd - navigation.connectStart,
+                'Server Response': navigation.responseEnd - navigation.requestStart,
+                'DOM Content Loaded': navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+                'Load Complete': navigation.loadEventEnd - navigation.loadEventStart,
+                'Total Load Time': navigation.loadEventEnd - navigation.fetchStart
+            };
+
+            let html = '';
+            for (const [metric, value] of Object.entries(metrics)) {
+                const score = value < 1000 ? 'good' : value < 3000 ? 'warning' : 'poor';
+                html += `
+                    <div class="metric">
+                        <span>${metric}:</span>
+                        <span class="${score}">${Math.round(value)}ms</span>
+                    </div>
+                `;
+            }
+
+            results.innerHTML = html;
+        }
+
+        // Memory Usage Test
+        function testMemoryUsage() {
+            const results = document.getElementById('memory-usage');
+            
+            if ('memory' in performance) {
+                const memory = performance.memory;
+                const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
+                const totalMB = Math.round(memory.totalJSHeapSize / 1024 / 1024);
+                const limitMB = Math.round(memory.jsHeapSizeLimit / 1024 / 1024);
+                
+                const usedScore = usedMB < 50 ? 'good' : usedMB < 100 ? 'warning' : 'poor';
+                
+                results.innerHTML = `
+                    <div class="metric">
+                        <span>Used Memory:</span>
+                        <span class="${usedScore}">${usedMB}MB</span>
+                    </div>
+                    <div class="metric">
+                        <span>Total Memory:</span>
+                        <span>${totalMB}MB</span>
+                    </div>
+                    <div class="metric">
+                        <span>Memory Limit:</span>
+                        <span>${limitMB}MB</span>
+                    </div>
+                `;
+            } else {
+                results.innerHTML = '<p>Memory API not available in this browser</p>';
+            }
+        }
+
+        // Network Performance Test
+        function testNetworkPerformance() {
+            const results = document.getElementById('network-performance');
+            
+            if ('connection' in navigator) {
+                const connection = navigator.connection;
+                const effectiveType = connection.effectiveType || 'unknown';
+                const downlink = connection.downlink || 'unknown';
+                const rtt = connection.rtt || 'unknown';
+                
+                const typeScore = effectiveType === '4g' ? 'good' : effectiveType === '3g' ? 'warning' : 'poor';
+                
+                results.innerHTML = `
+                    <div class="metric">
+                        <span>Connection Type:</span>
+                        <span class="${typeScore}">${effectiveType}</span>
+                    </div>
+                    <div class="metric">
+                        <span>Download Speed:</span>
+                        <span>${downlink} Mbps</span>
+                    </div>
+                    <div class="metric">
+                        <span>Round Trip Time:</span>
+                        <span>${rtt}ms</span>
+                    </div>
+                `;
+            } else {
+                results.innerHTML = '<p>Network Information API not available in this browser</p>';
+            }
+        }
+
+        // Service Worker Status Check
+        async function checkServiceWorker() {
+            const results = document.getElementById('service-worker-status');
+            
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        results.innerHTML = `
+                            <div class="metric">
+                                <span>Service Worker Status:</span>
+                                <span class="good">Active</span>
+                            </div>
+                            <div class="metric">
+                                <span>Scope:</span>
+                                <span>${registration.scope}</span>
+                            </div>
+                        `;
+                    } else {
+                        results.innerHTML = '<p class="warning">No service worker registered</p>';
+                    }
+                } catch (error) {
+                    results.innerHTML = `<p class="poor">Error checking service worker: ${error.message}</p>`;
+                }
+            } else {
+                results.innerHTML = '<p class="poor">Service Worker not supported in this browser</p>';
+            }
+        }
+
+        // Mobile Performance Test
+        function testMobilePerformance() {
+            const results = document.getElementById('mobile-performance');
+            
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const screenWidth = window.screen.width;
+            const screenHeight = window.screen.height;
+            const pixelRatio = window.devicePixelRatio || 1;
+            
+            results.innerHTML = `
+                <div class="metric">
+                    <span>Device Type:</span>
+                    <span class="${isMobile ? 'good' : 'warning'}">${isMobile ? 'Mobile' : 'Desktop'}</span>
+                </div>
+                <div class="metric">
+                    <span>Screen Resolution:</span>
+                    <span>${screenWidth}x${screenHeight}</span>
+                </div>
+                <div class="metric">
+                    <span>Pixel Ratio:</span>
+                    <span>${pixelRatio}x</span>
+                </div>
+                <div class="metric">
+                    <span>Touch Support:</span>
+                    <span class="${'ontouchstart' in window ? 'good' : 'warning'}">${'ontouchstart' in window ? 'Yes' : 'No'}</span>
+                </div>
+            `;
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testLoadingPerformance();
+                testMemoryUsage();
+                testNetworkPerformance();
+                checkServiceWorker();
+                testMobilePerformance();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
