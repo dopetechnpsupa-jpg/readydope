@@ -929,7 +929,50 @@ export class EmailService {
                 <li>Update order status in admin panel</li>
                 <li>Process payment verification and receipt review</li>
                 <li>Prepare items for delivery/pickup</li>
+                <li>Send customer confirmation email using the template below</li>
               </ul>
+            </div>
+
+            <div class="section" style="background-color: #000000; border: 3px solid #F7DD0F; border-radius: 12px; padding: 25px; margin: 30px 0;">
+              <h3 style="color: #F7DD0F; text-align: center; margin-bottom: 20px;">📧 Customer Email Template</h3>
+              <div style="background-color: #F7DD0F; border: 2px solid #000000; border-radius: 8px; padding: 15px; margin: 15px 0; text-align: center;">
+                <p style="margin: 0; color: #000000; font-weight: 700; font-size: 14px;">📤 Copy the content below and forward it to the customer</p>
+              </div>
+              <div style="background-color: #F7DD0F; border: 2px solid #000000; border-radius: 8px; padding: 20px; margin: 15px 0; color: #000000; font-size: 13px; line-height: 1.5;">
+                <strong>Subject:</strong> Order Confirmation - ${orderData.orderId} | DopeTech Nepal<br><br>
+                
+                Dear ${orderData.customerInfo.fullName},<br><br>
+                
+                Thank you for placing your order with DopeTech Nepal! We're excited to fulfill your gaming gear request.<br><br>
+                
+                <strong>Order Details:</strong><br>
+                • Order ID: ${orderData.orderId}<br>
+                • Order Date: ${orderDate}<br>
+                • Total Amount: Rs ${orderData.total.toLocaleString()}<br>
+                • Payment Method: ${orderData.paymentOption === 'full' ? 'Full Payment' : '10% Deposit'}<br><br>
+                
+                <strong>Order Items:</strong><br>
+                ${orderData.cart.map(item => `• ${item.name} (Qty: ${item.quantity}) - Rs ${(item.price * item.quantity).toLocaleString()}`).join('<br>')}<br><br>
+                
+                ${orderData.receiverInfo ? `
+                <strong>Delivery Information:</strong><br>
+                • Receiver: ${orderData.receiverInfo.fullName}<br>
+                • Phone: ${orderData.receiverInfo.phone}<br>
+                • Address: ${orderData.receiverInfo.fullAddress}<br><br>
+                ` : ''}
+                
+                <strong>Next Steps:</strong><br>
+                1. We'll review your order within 24 hours<br>
+                2. You'll receive updates on your order status<br>
+                3. We'll contact you to arrange delivery or pickup<br>
+                4. Your gaming gear will be prepared and ready soon!<br><br>
+                
+                If you have any questions, please contact us at dopetechnp@gmail.com<br><br>
+                
+                Best regards,<br>
+                The DopeTech Nepal Team<br>
+                🎮 Your Gaming Gear Destination
+              </div>
             </div>
 
             <div class="footer">
