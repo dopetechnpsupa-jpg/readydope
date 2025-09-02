@@ -18,10 +18,11 @@ import {
   Video,
   QrCode,
   RefreshCw,
-  FolderOpen
+  FolderOpen,
+  Star
 } from 'lucide-react'
 import { supabaseAdmin } from '@/lib/supabase'
-import { Product, ProductImage, getProducts, addProduct, updateProduct, deleteProduct, getProductImages, addProductImage, deleteProductImage, setPrimaryImage, reorderProductImages } from '@/lib/products-data'
+import { Product, ProductImage, getProducts, addProduct, updateProduct, deleteProduct, getProductImages, addProductImage, deleteProductImage, setPrimaryImage, reorderProductImages, toggleDopePick } from '@/lib/products-data'
 import { ProductImageManager } from '@/components/product-image-manager'
 import { AssetUploader } from '@/components/asset-uploader'
 import { HeroImageManager } from '@/components/hero-image-manager'
@@ -152,7 +153,8 @@ export default function AdminPage() {
     features: '',
     in_stock: true,
     discount: 0,
-    image_url: ''
+    image_url: '',
+    is_dope_pick: false
   })
 
   const ADMIN_PASSWORD = 'dopetech2024'
@@ -270,7 +272,8 @@ export default function AdminPage() {
         discount: parseFloat(formData.discount.toString()),
         features: featuresArray,
         color: formData.color.trim() || undefined, // Only include if not empty
-        image_url: imageUrl // Add the primary image URL
+        image_url: imageUrl, // Add the primary image URL
+        is_dope_pick: formData.is_dope_pick
       })
 
       if (newProduct) {
@@ -334,7 +337,8 @@ export default function AdminPage() {
         discount: parseFloat(formData.discount.toString()),
         features: featuresArray,
         color: formData.color.trim() || undefined, // Only include if not empty
-        image_url: imageUrl // Add the primary image URL
+        image_url: imageUrl, // Add the primary image URL
+        is_dope_pick: formData.is_dope_pick
       })
 
       if (updatedProduct) {
@@ -405,7 +409,8 @@ export default function AdminPage() {
       features: Array.isArray(product.features) ? product.features.join(', ') : '',
       in_stock: product.in_stock,
       discount: product.discount,
-      image_url: product.image_url
+      image_url: product.image_url,
+      is_dope_pick: product.is_dope_pick || false
     })
 
     // Fetch existing images for this product
@@ -418,6 +423,52 @@ export default function AdminPage() {
     }
 
     setShowEditModal(true)
+  }
+
+  const handleToggleDopePick = async (product: Product) => {
+    try {
+      // Check if we're trying to add a product and already have 10 dope picks
+      if (!product.is_dope_pick) {
+        const currentDopePicksCount = products.filter(p => p.is_dope_pick).length
+        if (currentDopePicksCount >= 10) {
+          toast({
+            title: "Maximum Limit Reached",
+            description: "You can only have up to 10 products in dope picks. Remove some existing picks first.",
+            variant: "destructive",
+          })
+          return
+        }
+      }
+
+      const updatedProduct = await toggleDopePick(product.id)
+      
+      if (updatedProduct) {
+        // Update the local products state
+        setProducts(products.map(p => 
+          p.id === product.id ? { ...p, is_dope_pick: updatedProduct.is_dope_pick } : p
+        ))
+        
+        const newCount = products.filter(p => p.is_dope_pick).length + (updatedProduct.is_dope_pick ? 1 : -1)
+        
+        toast({
+          title: "Success",
+          description: `Product ${updatedProduct.is_dope_pick ? 'added to' : 'removed from'} dope picks (${newCount}/10)`,
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update dope pick status",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error toggling dope pick status:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update dope pick status",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleCancelEdit = () => {
@@ -438,7 +489,8 @@ export default function AdminPage() {
       features: '',
       in_stock: true,
       discount: 0,
-      image_url: ''
+      image_url: '',
+      is_dope_pick: false
     })
   }
 
@@ -730,6 +782,42 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* Dope Picks Counter */}
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Star className="w-5 h-5 text-yellow-400" />
+                  <span className="text-white font-medium">Dope Picks Status</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-300">Currently Selected:</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    products.filter(p => p.is_dope_pick).length >= 10 
+                      ? 'bg-red-500/20 text-red-400' 
+                      : products.filter(p => p.is_dope_pick).length >= 8
+                      ? 'bg-yellow-500/20 text-yellow-400'
+                      : 'bg-green-500/20 text-green-400'
+                  }`}>
+                    {products.filter(p => p.is_dope_pick).length}/10
+                  </span>
+                </div>
+              </div>
+              {products.filter(p => p.is_dope_pick).length >= 10 && (
+                <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-sm text-red-400">
+                    ⚠️ Maximum limit reached! Remove some products from dope picks before adding new ones.
+                  </p>
+                </div>
+              )}
+              {products.filter(p => p.is_dope_pick).length >= 8 && products.filter(p => p.is_dope_pick).length < 10 && (
+                <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <p className="text-sm text-yellow-400">
+                    ⚠️ Almost at limit! You have {10 - products.filter(p => p.is_dope_pick).length} spots remaining.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Products List */}
             <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl p-4 sm:p-6">
               {loading ? (
@@ -768,6 +856,26 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => handleToggleDopePick(product)}
+                            disabled={!product.is_dope_pick && products.filter(p => p.is_dope_pick).length >= 10}
+                            className={`p-2 rounded-lg transition-colors duration-200 ${
+                              product.is_dope_pick === true
+                                ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30' 
+                                : !product.is_dope_pick && products.filter(p => p.is_dope_pick).length >= 10
+                                ? 'bg-gray-500/10 text-gray-500 cursor-not-allowed'
+                                : 'bg-gray-500/20 text-gray-400 hover:bg-gray-500/30'
+                            }`}
+                            title={
+                              product.is_dope_pick === true 
+                                ? 'Remove from dope picks' 
+                                : !product.is_dope_pick && products.filter(p => p.is_dope_pick).length >= 10
+                                ? 'Maximum limit reached (10/10)'
+                                : 'Add to dope picks'
+                            }
+                          >
+                            <Star className={`w-4 h-4 ${product.is_dope_pick === true ? 'fill-current' : ''}`} />
+                          </button>
                           <button
                             onClick={() => handleEditClick(product)}
                             className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors duration-200 text-blue-400 hover:text-blue-300"
@@ -1031,6 +1139,17 @@ export default function AdminPage() {
                 <label htmlFor="inStock" className="text-sm text-gray-300">In Stock</label>
               </div>
 
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isDopePick"
+                  checked={formData.is_dope_pick}
+                  onChange={(e) => setFormData({...formData, is_dope_pick: e.target.checked})}
+                  className="w-4 h-4 text-yellow-600 bg-white/10 border-white/20 rounded focus:ring-yellow-500"
+                />
+                <label htmlFor="isDopePick" className="text-sm text-gray-300">Add to Dope Picks</label>
+              </div>
+
               {/* Product Images Manager */}
               <ProductImageManager
                 productId={0}
@@ -1181,6 +1300,17 @@ export default function AdminPage() {
                   className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="editInStock" className="text-sm text-gray-300">In Stock</label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="editIsDopePick"
+                  checked={formData.is_dope_pick}
+                  onChange={(e) => setFormData({...formData, is_dope_pick: e.target.checked})}
+                  className="w-4 h-4 text-yellow-600 bg-white/10 border-white/20 rounded focus:ring-yellow-500"
+                />
+                <label htmlFor="editIsDopePick" className="text-sm text-gray-300">Add to Dope Picks</label>
               </div>
 
               {/* Product Images Manager */}

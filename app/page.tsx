@@ -556,7 +556,7 @@ export default function DopeTechEcommerce() {
       try {
         // Fetching dope picks from Supabase
         
-        const dopePicksData = await getDopePicks(6)
+        const dopePicksData = await getDopePicks(10)
         
         if (isMounted) {
           // Dope picks fetched successfully

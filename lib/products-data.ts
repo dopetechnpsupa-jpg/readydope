@@ -29,6 +29,7 @@ export interface Product {
   in_stock: boolean;
   discount: number;
   hidden_on_home?: boolean;
+  is_dope_pick?: boolean; // New field for manually selected dope picks
   created_at?: string; // Optional field for database products
 }
 
@@ -271,8 +272,8 @@ export async function getProductsByCategory(category: string): Promise<Product[]
   }
 }
 
-// Get random dope picks (maximum 6 products)
-export async function getDopePicks(maxCount: number = 6): Promise<Product[]> {
+// Get manually selected dope picks (maximum 10 products)
+export async function getDopePicks(maxCount: number = 10): Promise<Product[]> {
   try {
     // Add timeout protection - increased to 15 seconds
     const timeoutPromise = new Promise((_, reject) => {
@@ -283,6 +284,7 @@ export async function getDopePicks(maxCount: number = 6): Promise<Product[]> {
       .from('products')
       .select('*')
       .eq('hidden_on_home', false)
+      .eq('is_dope_pick', true)
       .order('id', { ascending: true });
 
     const { data, error } = await Promise.race([supabasePromise, timeoutPromise]) as any;
@@ -293,14 +295,13 @@ export async function getDopePicks(maxCount: number = 6): Promise<Product[]> {
     }
 
     if (!data || data.length === 0) {
-      console.log('⚠️ No products in database for dope picks, using fallback')
+      console.log('⚠️ No manually selected dope picks found, using fallback')
       const shuffled = [...fallbackProducts].sort(() => Math.random() - 0.5);
       return shuffled.slice(0, Math.min(maxCount, shuffled.length));
     }
 
-    // Randomly shuffle the products and take up to maxCount
-    const shuffled = [...(data as unknown as Product[])].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, Math.min(maxCount, shuffled.length));
+    // Return manually selected dope picks up to maxCount
+    return (data as unknown as Product[]).slice(0, maxCount);
   } catch (error) {
     console.error('❌ Error fetching dope picks:', error);
     // Use fallback products for dope picks
@@ -825,7 +826,8 @@ export async function addProduct(productData: Omit<Product, 'id' | 'rating' | 'r
         color: productData.color || null, // Use provided color or null
         in_stock: productData.in_stock,
         discount: productData.discount,
-        hidden_on_home: false
+        hidden_on_home: false,
+        is_dope_pick: productData.is_dope_pick || false
       })
       .select()
       .single();
@@ -856,7 +858,8 @@ export async function updateProduct(productId: number, productData: Partial<Omit
         features: productData.features,
         color: productData.color,
         in_stock: productData.in_stock,
-        discount: productData.discount
+        discount: productData.discount,
+        is_dope_pick: productData.is_dope_pick
       })
       .eq('id', productId)
       .select()
@@ -937,5 +940,42 @@ export async function deleteProduct(productId: number): Promise<boolean> {
   } catch (error) {
     console.error('Error deleting product:', error);
     return false;
+  }
+}
+
+export async function toggleDopePick(productId: number): Promise<Product | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('products')
+      .select('is_dope_pick')
+      .eq('id', productId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching dope pick status:', error);
+      return null;
+    }
+
+    const isDopePick = data?.is_dope_pick;
+
+    const { data: updatedData, error: updateError } = await supabaseAdmin
+      .from('products')
+      .update({
+        is_dope_pick: !isDopePick,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', productId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating dope pick status:', updateError);
+      return null;
+    }
+
+    return updatedData as unknown as Product;
+  } catch (error) {
+    console.error('Error toggling dope pick:', error);
+    return null;
   }
 }
