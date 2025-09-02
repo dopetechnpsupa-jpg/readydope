@@ -460,35 +460,35 @@ export class EmailService {
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
               line-height: 1.6;
-              color: #ffffff;
+              color: #000000;
               max-width: 700px;
               margin: 0 auto;
               padding: 20px;
-              background-color: #000000;
+              background-color: #F7DD0F;
             }
             .container {
-              background-color: #111111;
+              background-color: #F7DD0F;
               border-radius: 12px;
               padding: 40px;
-              box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
-              border: 2px solid #F7DD0F;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+              border: 3px solid #000000;
             }
             .header {
               text-align: center;
               margin-bottom: 40px;
-              border-bottom: 3px solid #F7DD0F;
+              border-bottom: 3px solid #000000;
               padding-bottom: 20px;
             }
             .logo {
               font-size: 32px;
               font-weight: bold;
-              color: #F7DD0F;
+              color: #000000;
               margin-bottom: 10px;
-              text-shadow: 0 0 10px rgba(247, 221, 15, 0.5);
+              text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
             }
             .alert-badge {
-              background-color: #F7DD0F;
-              color: #000000;
+              background-color: #000000;
+              color: #F7DD0F;
               padding: 8px 16px;
               border-radius: 20px;
               font-size: 14px;
@@ -513,8 +513,8 @@ export class EmailService {
               text-shadow: 0 0 10px rgba(247, 221, 15, 0.3);
             }
             .order-summary {
-              background-color: #1a1a1a;
-              border: 1px solid #F7DD0F;
+              background-color: #000000;
+              border: 1px solid #000000;
               border-radius: 8px;
               padding: 20px;
               margin: 20px 0;
@@ -533,20 +533,20 @@ export class EmailService {
             }
             .summary-item {
               padding: 10px;
-              background-color: #222222;
+              background-color: #F7DD0F;
               border-radius: 6px;
-              border: 1px solid #333333;
+              border: 1px solid #000000;
             }
             .summary-label {
               font-weight: 500;
-              color: #F7DD0F;
+              color: #000000;
               font-size: 14px;
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
             .summary-value {
               font-weight: 600;
-              color: #ffffff;
+              color: #000000;
               font-size: 16px;
               margin-top: 5px;
             }
@@ -1132,6 +1132,307 @@ export class EmailService {
       customerEmail,
       adminEmail: adminEmailResult
     }
+  }
+
+  /**
+   * Generate customer copy email HTML for manual sending
+   */
+  generateCustomerCopyEmail(orderData: OrderData, orderDbId: number): string {
+    const depositAmount = orderData.paymentOption === 'deposit' ? Math.max(1, Math.round(orderData.total * 0.10)) : 0
+    const orderDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Order Confirmation - DopeTech Nepal</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              line-height: 1.6;
+              color: #000000;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background-color: #F7DD0F;
+            }
+            .container {
+              background-color: #F7DD0F;
+              border-radius: 12px;
+              padding: 40px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+              border: 3px solid #000000;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 3px solid #000000;
+              padding-bottom: 20px;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: bold;
+              color: #000000;
+              margin-bottom: 10px;
+              text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            }
+            .order-id {
+              background-color: #000000;
+              border: 1px solid #000000;
+              border-radius: 8px;
+              padding: 15px;
+              margin: 20px 0;
+              text-align: center;
+            }
+            .order-id h2 {
+              margin: 0;
+              color: #F7DD0F;
+              font-size: 20px;
+            }
+            .section {
+              margin: 25px 0;
+            }
+            .section h3 {
+              margin: 0 0 15px 0;
+              color: #000000;
+              font-size: 18px;
+              border-bottom: 2px solid #000000;
+              padding-bottom: 8px;
+            }
+            .customer-info {
+              background-color: #000000;
+              border: 1px solid #000000;
+              border-radius: 8px;
+              padding: 20px;
+            }
+            .customer-info h4 {
+              margin: 0 0 15px 0;
+              color: #F7DD0F;
+              font-size: 16px;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 15px;
+            }
+            .info-item {
+              padding: 10px;
+              background-color: #F7DD0F;
+              border-radius: 6px;
+              border: 1px solid #000000;
+            }
+            .info-label {
+              font-size: 12px;
+              font-weight: 600;
+              color: #000000;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 5px;
+            }
+            .info-value {
+              font-size: 14px;
+              font-weight: 600;
+              color: #000000;
+            }
+            .item {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              padding: 15px;
+              background-color: #000000;
+              border-radius: 8px;
+              margin: 10px 0;
+              border: 1px solid #000000;
+            }
+            .item-name {
+              font-weight: 600;
+              color: #F7DD0F;
+              font-size: 16px;
+            }
+            .item-details {
+              color: #F7DD0F;
+              font-size: 14px;
+              margin-top: 5px;
+            }
+            .item-price {
+              font-weight: bold;
+              color: #F7DD0F;
+              font-size: 16px;
+            }
+            .total-section {
+              background-color: #000000;
+              border: 2px solid #000000;
+              border-radius: 8px;
+              padding: 25px;
+              margin: 25px 0;
+              text-align: center;
+            }
+            .total-amount {
+              font-size: 28px;
+              font-weight: bold;
+              color: #F7DD0F;
+              margin: 10px 0;
+            }
+            .payment-details {
+              background-color: #000000;
+              border: 1px solid #000000;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 20px 0;
+            }
+            .payment-details h4 {
+              margin: 0 0 15px 0;
+              color: #F7DD0F;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #000000;
+              color: #000000;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">🎮 DopeTech Nepal</div>
+              <h1 style="margin: 0; color: #000000;">Order Confirmation</h1>
+              <p style="margin: 10px 0 0 0; color: #000000; font-size: 16px;">Thank you for your order!</p>
+            </div>
+
+            <div class="order-id">
+              <h2>✅ Order Confirmed!</h2>
+              <p style="margin: 10px 0 0 0; font-size: 18px; color: #F7DD0F;">
+                Order ID: <strong>${orderData.orderId}</strong>
+              </p>
+              <p style="margin: 5px 0 0 0; font-size: 14px; color: #F7DD0F;">
+                Placed on: ${orderDate}
+              </p>
+            </div>
+
+            <div class="section">
+              <h3>👤 Order Details</h3>
+              <div class="customer-info">
+                <h4>Customer Information</h4>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="info-label">Name:</div>
+                    <div class="info-value">${orderData.customerInfo.fullName}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Email:</div>
+                    <div class="info-value">${orderData.customerInfo.email}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Phone:</div>
+                    <div class="info-value">${orderData.customerInfo.phone}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Address:</div>
+                    <div class="info-value">${orderData.customerInfo.fullAddress}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            ${orderData.receiverInfo ? `
+            <div class="section">
+              <h3>📦 Delivery Information</h3>
+              <div class="customer-info">
+                <h4>Ship to Different Address</h4>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="info-label">Receiver Name:</div>
+                    <div class="info-value">${orderData.receiverInfo.fullName}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Receiver Phone:</div>
+                    <div class="info-value">${orderData.receiverInfo.phone}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Delivery Address:</div>
+                    <div class="info-value">${orderData.receiverInfo.fullAddress}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+
+            <div class="section">
+              <h3>📦 Order Items</h3>
+              ${orderData.cart.map(item => `
+                <div class="item">
+                  <div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-details">Quantity: ${item.quantity} × Rs ${item.price.toLocaleString()}</div>
+                    ${(item.selectedColor || (item.selectedFeatures && item.selectedFeatures.length > 0)) ? `
+                      <div class="item-options" style="margin-top: 5px; font-size: 12px; color: #F7DD0F;">
+                        ${item.selectedColor ? `<div>Color: ${item.selectedColor}</div>` : ''}
+                        ${item.selectedFeatures && item.selectedFeatures.length > 0 ? `<div>Features: ${item.selectedFeatures.join(', ')}</div>` : ''}
+                      </div>
+                    ` : ''}
+                  </div>
+                  <div class="item-price">
+                    Rs ${(item.price * item.quantity).toLocaleString()}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="total-section">
+              <h3 style="margin: 0 0 15px 0; color: #F7DD0F;">💰 Order Summary</h3>
+              <div class="total-amount">Rs ${orderData.total.toLocaleString()}</div>
+              <p style="margin: 10px 0 0 0; color: #F7DD0F;">
+                Total Order Value
+              </p>
+              ${orderData.paymentOption === 'deposit' ? `
+                <p style="margin: 10px 0 0 0; color: #F7DD0F; font-size: 14px;">
+                  Deposit Required: Rs ${depositAmount.toLocaleString()}
+                </p>
+                <p style="margin: 5px 0 0 0; color: #F7DD0F; font-size: 14px;">
+                  Remaining Balance: Rs ${(orderData.total - depositAmount).toLocaleString()}
+                </p>
+              ` : ''}
+            </div>
+
+            <div class="payment-details">
+              <h4>💳 Payment Information</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                  <div class="info-label">Payment Option:</div>
+                  <div class="info-value">
+                    ${orderData.paymentOption === 'full' ? 'Full Payment' : '10% Deposit'}
+                  </div>
+                </div>
+                ${orderData.paymentOption === 'deposit' ? `
+                  <div>
+                    <div class="info-label">Deposit Amount:</div>
+                    <div class="info-value" style="color: #F7DD0F; font-weight: bold;">
+                      Rs ${depositAmount.toLocaleString()}
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>Thank you for choosing DopeTech Nepal!</p>
+              <p>If you have any questions, please contact us at dopetechnp@gmail.com</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
   }
 
   /**
